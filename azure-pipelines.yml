@@ -24,25 +24,9 @@ resources:
 variables:
   - group: nexus
   - name: artifactName
-    value: viscon-saleor-dashboard
+    value: hybrit-demo-saleor-dashboard
 
 stages:
-  # - stage: Codequality
-  #   jobs:
-  #     - job: Sonarqube
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               yarn
-  #         - template: sonarqube.template.yml@templates
-  #           parameters:
-  #             serviceConnection: "HybrIT Sonarqube"
-  #             buildReason: $(variables['Build.Reason'])
-  #             targetBranch: $(System.PullRequest.TargetBranch)
-  #             sourceBranch: $(System.PullRequest.SourceBranch)
-  #             pullRequestNumber: "$(System.PullRequest.PullRequestNumber)"
   - stage: Build
     dependsOn: []
     jobs:
@@ -68,14 +52,7 @@ stages:
           - template: docker.template.yml@templates
             parameters:
               imageName: $(artifactName)
-              imageVersion: $(GitVersion.SemVer)-test
-              dockerFile: $(build.sourcesdirectory)/Dockerfile
-              dockerRegistryEndpoint: "Docker - HybrIT - nexus"
-              arguments: --build-arg API_URI=https://test.core.viscon.hybrit.io/graphql/
-          - template: docker.template.yml@templates
-            parameters:
-              imageName: $(artifactName)
-              imageVersion: $(GitVersion.SemVer)-prod
+              imageVersion: $(GitVersion.SemVer)
               dockerFile: $(build.sourcesdirectory)/Dockerfile
               dockerRegistryEndpoint: "Docker - HybrIT - nexus"
               arguments: --build-arg API_URI=https://core.viscon.hybrit.io/graphql/
@@ -83,16 +60,7 @@ stages:
             parameters:
               chartName: $(artifactName)
               chartPath: "$(build.sourcesdirectory)/charts/$(artifactName)"
-              chartVersion: $(GitVersion.SemVer)-test
-              destination: "$(Build.ArtifactStagingDirectory)/charts"
-              nexusUsername: $(nexus-username)
-              nexusPassword: $(nexus-password)
-              nexusHost: $(nexus-host-helm)
-          - template: helm.template.yml@templates
-            parameters:
-              chartName: $(artifactName)
-              chartPath: "$(build.sourcesdirectory)/charts/$(artifactName)"
-              chartVersion: $(GitVersion.SemVer)-prod
+              chartVersion: $(GitVersion.SemVer)
               destination: "$(Build.ArtifactStagingDirectory)/charts"
               nexusUsername: $(nexus-username)
               nexusPassword: $(nexus-password)
@@ -103,21 +71,17 @@ stages:
               targetType: "inline"
               script: |
                 mkdir -p $(build.artifactstagingdirectory)/drop
-                cp $(Build.ArtifactStagingDirectory)/charts/$(artifactName)-$(GitVersion.SemVer)-test.tgz $(build.artifactstagingdirectory)/drop/$(artifactName)-test.tgz
-                cp $(Build.ArtifactStagingDirectory)/charts/$(artifactName)-$(GitVersion.SemVer)-prod.tgz $(build.artifactstagingdirectory)/drop/$(artifactName)-prod.tgz
-                cp $(build.sourcesdirectory)/values.test.yaml $(build.artifactstagingdirectory)/drop/
-                cp $(build.sourcesdirectory)/values.prod.yaml $(build.artifactstagingdirectory)/drop/
+                cp $(Build.ArtifactStagingDirectory)/charts/$(artifactName)-$(GitVersion.SemVer).tgz $(build.artifactstagingdirectory)/drop/$(artifactName).tgz
           - publish: $(Build.ArtifactStagingDirectory)/drop
             displayName: "publish artifact"
             artifact: output
-  - stage: deploy_test
-    displayName: Deploy to test
+  - stage: deploy
+    displayName: Deploy
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     dependsOn: Build
     jobs:
-      - deployment: deploy_test
-        displayName: Deploy to test
-        environment: "viscon-test.test"
+      - deployment: deploy
+        displayName: Deploy
         strategy:
           runOnce:
             deploy:
@@ -131,38 +95,9 @@ stages:
                   displayName: "Install or upgrade viscon-saleor-dashboard"
                   inputs:
                     connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceConnection: 'aks - viscon'
-                    namespace: "test"
+                    kubernetesServiceConnection: 'GPC -  hybrit-dev-weu'
+                    namespace: "saleor-demo"
                     command: "upgrade"
                     chartType: "FilePath"
-                    chartPath: "$(Pipeline.Workspace)/output/$(artifactName)-test.tgz"
+                    chartPath: "$(Pipeline.Workspace)/output/$(artifactName).tgz"
                     releaseName: "$(artifactName)"
-                    arguments: "-f $(Pipeline.Workspace)/output/values.test.yaml"
-  - stage: deploy_prod
-    displayName: Deploy to production
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-    dependsOn: Build
-    jobs:
-      - deployment: deploy_prod
-        displayName: Deploy to production
-        environment: "viscon-prod.prod"
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - download: current
-                  artifact: output
-                - task: HelmInstaller@1
-                  inputs:
-                    helmVersionToInstall: "v3.1.0"
-                - task: HelmDeploy@0
-                  displayName: "Install or upgrade viscon-saleor-dashboard"
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceConnection: 'aks - viscon'
-                    namespace: "prod"
-                    command: "upgrade"
-                    chartType: "FilePath"
-                    chartPath: "$(Pipeline.Workspace)/output/$(artifactName)-prod.tgz"
-                    releaseName: "$(artifactName)"
-                    arguments: "-f $(Pipeline.Workspace)/output/values.prod.yaml"
