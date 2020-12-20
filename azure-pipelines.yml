@@ -40,9 +40,9 @@ stages:
               cicduser: $(nexus-email)
               secrets:
                 - name: cicdprivatekey
-                  secureFile: private-key.asc
+                  secureFile:  cicd-private-key
                 - name: cicdpublickey
-                  secureFile: public-key.asc
+                  secureFile: cicd-public-key
           - task: GitVersion@5
             displayName: "Use GitVersion"
             inputs:
