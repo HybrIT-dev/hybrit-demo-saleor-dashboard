@@ -55,7 +55,7 @@ stages:
               imageVersion: $(GitVersion.SemVer)
               dockerFile: $(build.sourcesdirectory)/Dockerfile
               dockerRegistryEndpoint: "Docker - HybrIT - nexus"
-              arguments: --build-arg API_URI=https://core.viscon.hybrit.io/graphql/
+              arguments: --build-arg API_URI=https://core.demo.ecommerce-portal.hybrit.io/graphql/
           - template: helm.template.yml@templates
             parameters:
               chartName: $(artifactName)
@@ -92,7 +92,7 @@ stages:
                   inputs:
                     helmVersionToInstall: "v3.1.0"
                 - task: HelmDeploy@0
-                  displayName: "Install or upgrade viscon-saleor-dashboard"
+                  displayName: "Install or upgrade hybrit-demo-saleor-dashboard"
                   inputs:
                     connectionType: 'Kubernetes Service Connection'
                     kubernetesServiceConnection: 'GPC -  hybrit-dev-weu'

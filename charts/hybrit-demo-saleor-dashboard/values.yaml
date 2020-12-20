@@ -28,8 +28,6 @@ probes:
   terminationGracePeriodSeconds: 10
 
 env:
-  - name: SECRET_KEY
-    value: "945672686761362652"
   - name: API_URI
     value: "https://ecommerce-portal.core.demo.hybrit.io/graphql/"
 
@@ -42,12 +40,12 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: "ecommerce-portal.dashboard.demo.hybrit.io"
+    - host: "demo.dashboard.ecommerce-portal.hybrit.io"
       path: /
   tls:
     - hosts:
-        - "ecommerce-portal.dashboard.demo.hybrit.io"
-      secretName: "ecommerce-portal-ingress-cert"
+        - "demo.dashboard.ecommerce-portal.hybrit.io"
+      secretName: "ecommerce-portal-dashboard-ingress-cert"
 
 autoscaling:
   enabled: false
