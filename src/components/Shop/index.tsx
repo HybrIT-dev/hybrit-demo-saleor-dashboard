@@ -1,7 +1,7 @@
-import appleTouchIcon from "@assets/favicons/apple-touch-icon.png";
-import favicon16 from "@assets/favicons/favicon-16x16.png";
-import favicon32 from "@assets/favicons/favicon-32x32.png";
-import safariPinnedTab from "@assets/favicons/safari-pinned-tab.svg";
+import appleTouchIcon from "@assets/favicons/logo-light.svg";
+import favicon16 from "@assets/favicons/logo-light.svg";
+import favicon32 from "@assets/favicons/logo-light.svg";
+import safariPinnedTab from "@assets/favicons/logo-light.svg";
 import React from "react";
 import Helmet from "react-helmet";
 
